@@ -4,11 +4,11 @@ import time
 import pytest
 import torch
 from hivemind import DHT, get_logger
-from test_utils import *
 
 from petals.client import RemoteSequenceManager, RemoteSequential
 from petals.client.remote_model import DistributedBloomConfig
 from petals.data_structures import UID_DELIMITER
+from test_utils import *
 
 logger = get_logger(__name__)
 
@@ -26,7 +26,7 @@ def test_sequence_manager_basics(mode: str):
     sequential = RemoteSequential(
         config,
         dht,
-        sequence_manager=TestSequenceManager(dht, block_uids, sequential.p2p, _was_shut_down=shutdown_evt, start=True),
+        sequence_manager=TestSequenceManager(dht, block_uids, sequential.p2p, _was_shut_down=shutdown_evt),
     )
 
     sequence = sequential.sequence_manager.make_sequence(mode=mode)

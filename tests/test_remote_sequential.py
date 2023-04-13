@@ -1,14 +1,14 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from hivemind import DHT, BatchTensorDescriptor, get_logger, use_hivemind_log_handler
+from hivemind import DHT, BatchTensorDescriptor, get_logger
 from hivemind.proto import runtime_pb2
-from test_utils import *
 
 from petals.bloom.from_pretrained import load_pretrained_block
 from petals.client import RemoteSequenceManager, RemoteSequential
 from petals.client.remote_model import DistributedBloomConfig
 from petals.data_structures import UID_DELIMITER
+from test_utils import *
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,7 @@ def test_remote_sequential():
     # test RemoteSequential with lossy compression
     block_uids = [f"{config.dht_prefix}{UID_DELIMITER}{i}" for i in range(config.n_layer)]
     lossy_sequential = RemoteSequential(
-        config, dht, sequence_manager=DummyCustomSequenceManager(dht, block_uids, sequential.p2p, start=True)
+        config, dht, sequence_manager=DummyCustomSequenceManager(dht, block_uids, sequential.p2p)
     )
 
     test_inputs.grad = None

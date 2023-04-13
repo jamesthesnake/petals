@@ -18,11 +18,11 @@ jobs:
         id: cache-model
         uses: actions/cache@v3
         with:
-          path: ~/.dummy
+          path: ~/converted_ok
           key: model-v1-${{ hashFiles('setup.cfg', 'src/petals/cli/convert_model.py') }}
       - name: Set up Python
         if: steps.cache-model.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.9
       - name: Cache dependencies
@@ -52,21 +52,21 @@ jobs:
           export HF_TAG=${{ hashFiles('setup.cfg', 'src/petals/cli/convert_model.py') }}
           python -m petals.cli.convert_model --model bigscience/bloom-560m --output_path ./converted_model \
             --output_repo bloom-testing/test-bloomd-560m-$HF_TAG --use_auth_token $BLOOM_TESTING_WRITE_TOKEN \
-            --resize_token_embeddings 50000
+            --resize_token_embeddings 50000 && touch ~/converted_ok
 
   run-tests:
     runs-on: ubuntu-latest
     needs: convert-model
     strategy:
       matrix:
-        python-version: [ 3.7, 3.8, 3.9 ]
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
       fail-fast: false
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
       - name: Cache dependencies
