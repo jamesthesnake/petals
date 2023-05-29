@@ -27,14 +27,14 @@ class RemoteSequenceInfo:
     block_infos: Tuple[RemoteModuleInfo, ...]  # note: the contents of RemoteModuleInfo can and will be updated
     spans_by_priority: List[RemoteSpanInfo]
     spans_containing_block: Tuple[List[RemoteSpanInfo], ...]
-    last_updated_time: float
+    last_updated_time: Optional[float]
 
     @classmethod
     def make_empty(cls: Type[T], block_uids: Iterable[ModuleUID]) -> T:
         block_uids = tuple(block_uids)
         empty_block_infos = tuple(RemoteModuleInfo(uid, {}) for uid in block_uids)
         empty_spans = tuple([] for _ in range(len(block_uids)))
-        return cls(block_uids, empty_block_infos, [], empty_spans, last_updated_time=-float("inf"))
+        return cls(block_uids, empty_block_infos, [], empty_spans, last_updated_time=None)
 
     def __getitem__(self, ix: slice):
         assert isinstance(ix, slice)
@@ -77,7 +77,9 @@ class RemoteSequenceInfo:
                     if server.state != ServerState.ONLINE:
                         continue
                     if peer_id not in active_spans:
-                        active_spans[peer_id] = RemoteSpanInfo(start=block_index, end=block_index + 1, peer_id=peer_id)
+                        active_spans[peer_id] = RemoteSpanInfo(
+                            peer_id=peer_id, start=block_index, end=block_index + 1, throughput=server.throughput
+                        )
                     else:  # peer_id in active_spans
                         active_spans[peer_id].end = block_index + 1
 
@@ -91,7 +93,7 @@ class RemoteSequenceInfo:
                     closed_spans.append(active_spans.pop(peer_id))
         assert not active_spans, f"spans: {active_spans}"
 
-        closed_spans.sort(key=lambda span: span.end - span.start, reverse=True)
+        closed_spans.sort(key=lambda span: span.length, reverse=True)
 
         spans_containing_block = tuple(list() for _ in range(len(block_infos)))
         for span in closed_spans:
